@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swap IT | Intercambio de Hardware BUAP</title>
+    <style>
+        /* ==========================================================================
+           1. DESIGN SYSTEM & VARIABLES
+           ========================================================================== */
+        :root {
+            --bg-deep: #020617; 
+            --bg-surface: #0F172A; 
+            --bg-glass: rgba(15, 23, 42, 0.65);
+            
+            --primary: #2563EB; 
+            --primary-hover: #3B82F6; 
+            --primary-glow: rgba(37, 99, 235, 0.4);
+            
+            --accent: #06B6D4; 
+            --accent-glow: rgba(6, 182, 212, 0.4);
+            
+            --success: #10B981; 
+            --warning: #F59E0B; 
+            --danger: #EF4444;
+            
+            --text-main: #F8FAFC; 
+            --text-muted: #94A3B8; 
+            
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-light: rgba(255, 255, 255, 0.15);
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+        body { background-color: var(--bg-deep); color: var(--text-main); height: 100vh; overflow: hidden; }
+        button { cursor: pointer; border: none; outline: none; background: transparent; font-family: inherit; }
+
+        /* ==========================================================================
+           2. PURE CSS SPA LOGIC (THE MAGIC)
+           ========================================================================== */
+        /* Ocultamos los radio buttons que controlan el estado */
+        input[type="radio"][name="spa-nav"] { display: none; }
+
+        /* Ocultamos todas las vistas por defecto */
+        .view-section { display: none; flex-direction: column; gap: 32px; animation: fadeIn 0.4s ease forwards; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Lógica de ruteo: Si el radio está checked, mostramos su vista correspondiente */
+        #tab-dashboard:checked ~ .app-layout .view-dashboard { display: flex; }
+        #tab-boveda:checked ~ .app-layout .view-boveda { display: flex; }
+        #tab-inventario:checked ~ .app-layout .view-inventario { display: flex; }
+        #tab-matches:checked ~ .app-layout .view-matches { display: flex; }
+        #tab-billetera:checked ~ .app-layout .view-billetera { display: flex; }
+
+        /* Lógica visual del menú activo */
+        #tab-dashboard:checked ~ .app-layout label[for="tab-dashboard"],
+        #tab-boveda:checked ~ .app-layout label[for="tab-boveda"],
+        #tab-inventario:checked ~ .app-layout label[for="tab-inventario"],
+        #tab-matches:checked ~ .app-layout label[for="tab-matches"],
+        #tab-billetera:checked ~ .app-layout label[for="tab-billetera"] {
+            background: linear-gradient(90deg, rgba(37,99,235,0.15) 0%, transparent 100%);
+            border-left: 3px solid var(--primary);
+            color: var(--text-main);
+        }
+
+        /* ==========================================================================
+           3. LAYOUT APP SHELL
+           ========================================================================== */
+        .app-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr 300px; 
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar { background: var(--bg-surface); border-right: 1px solid var(--border-subtle); padding: 24px 16px; display: flex; flex-direction: column; gap: 32px; z-index: 20;}
+        .brand { display: flex; align-items: center; gap: 12px; padding: 0 12px; }
+        .brand-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; box-shadow: 0 0 15px var(--primary-glow); }
+        .brand-text { font-size: 20px; font-weight: 700; }
+
+        .nav-menu { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--radius-md); color: var(--text-muted); transition: var(--transition); font-weight: 500; cursor: pointer; border-left: 3px solid transparent;}
+        .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-main); }
+        .nav-icon { width: 20px; height: 20px; fill: currentColor; }
+
+        .sidebar-footer { padding: 16px; background: rgba(0,0,0,0.2); border-radius: var(--radius-md); border: 1px solid var(--border-subtle); }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); object-fit: cover; }
+        .user-details h4 { font-size: 14px; font-weight: 600; }
+        .user-details p { font-size: 12px; color: var(--accent); margin-top: 2px;}
+
+        /* MAIN CONTENT AREA */
+        .main-content { display: flex; flex-direction: column; height: 100%; overflow-y: auto; position: relative; }
+        .main-content::before { content: ''; position: fixed; top: -100px; left: 30%; width: 500px; height: 500px; background: var(--primary); filter: blur(200px); opacity: 0.15; z-index: -1; border-radius: 50%; pointer-events: none;}
+
+        .topbar { padding: 20px 32px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(16px); z-index: 10; border-bottom: 1px solid var(--border-subtle); }
+        .search-bar { display: flex; align-items: center; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 8px 16px; width: 400px; }
+        .search-bar:focus-within { border-color: var(--primary); }
+        .search-input { background: transparent; border: none; color: var(--text-main); padding: 8px; width: 100%; outline: none; }
+        
+        .topbar-actions { display: flex; gap: 16px; }
+        .btn-icon { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-surface); border: 1px solid var(--border-subtle); color: var(--text-main); display: flex; align-items: center; justify-content: center; transition: var(--transition); position: relative; }
+        .btn-icon:hover { border-color: var(--primary); color: var(--primary); }
+        .badge-dot { position: absolute; top: 0; right: 0; width: 10px; height: 10px; background: var(--accent); border-radius: 50%; border: 2px solid var(--bg-deep); }
+
+        .page-content { padding: 32px; }
+
+        /* ==========================================================================
+           4. SHARED COMPONENTS (Buttons, Cards, Tables)
+           ========================================================================== */
+        .header-title h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        .header-title p { color: var(--text-muted); font-size: 15px; }
+
+        .btn-primary { background: var(--primary); color: #fff; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; transition: var(--transition); box-shadow: 0 4px 12px rgba(37,99,235,0.3);}
+        .btn-primary:hover { background: var(--primary-hover); box-shadow: 0 4px 20px var(--primary-glow); }
+        .btn-outline { background: transparent; border: 1px solid var(--border-light); color: var(--text-main); padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; transition: var(--transition); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); background: rgba(37,99,235,0.05);}
+
+        .data-table { width: 100%; border-collapse: collapse; background: var(--bg-surface); border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border-subtle);}
+        .data-table th { background: rgba(255,255,255,0.02); text-align: left; padding: 16px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 1px solid var(--border-subtle); }
+        .data-table td { padding: 16px; border-bottom: 1px solid var(--border-subtle); font-size: 14px; }
+        .data-table tr:hover { background: rgba(255,255,255,0.02); }
+
+        .tag { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .tag.success { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3);}
+        .tag.warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3);}
+        .tag.primary { background: rgba(37, 99, 235, 0.15); color: var(--primary); border: 1px solid rgba(37,99,235,0.3);}
+
+        /* ==========================================================================
+           5. VIEW SPECIFIC STYLES
+           ========================================================================== */
+        /* Dashboard Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .stat-card { background: var(--bg-glass); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 24px; display: flex; justify-content: space-between; align-items: center; }
+        .stat-info h3 { font-size: 14px; color: var(--text-muted); font-weight: 500; margin-bottom: 8px; }
+        .stat-info .value { font-size: 32px; font-weight: 700; display: flex; align-items: baseline; gap: 8px; }
+        .stat-icon { width: 48px; height: 48px; background: rgba(6, 182, 212, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 24px;}
+
+        /* Bóveda Grid */
+        .filters { display: flex; gap: 12px; margin-bottom: 24px; }
+        .filter-chip { padding: 8px 16px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 20px; font-size: 13px; cursor: pointer; transition: var(--transition);}
+        .filter-chip:hover, .filter-chip.active { border-color: var(--primary); color: var(--primary); background: rgba(37,99,235,0.1); }
+        
+        .boveda-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+        .hardware-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; transition: var(--transition);}
+        .hardware-card:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .hc-img { height: 160px; background: #1E293B; display: flex; align-items: center; justify-content: center; color: var(--text-muted); position: relative; }
+        .hc-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; flex-grow: 1;}
+        .hc-title { font-size: 16px; font-weight: 600; line-height: 1.4; }
+        .hc-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 16px; border-top: 1px dashed var(--border-subtle); }
+        
+        /* Billetera */
+        .wallet-banner { background: linear-gradient(135deg, var(--bg-surface), #172554); border: 1px solid var(--primary); border-radius: var(--radius-lg); padding: 32px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;}
+        .wb-balance h2 { font-size: 16px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500;}
+        .wb-balance .amount { font-size: 48px; font-weight: 800; color: #fff; text-shadow: 0 0 20px var(--primary-glow);}
+        .wb-balance .amount span { font-size: 24px; color: var(--accent); }
+
+        /* Right Panel (Static for simulation) */
+        .right-panel { background: var(--bg-surface); border-left: 1px solid var(--border-subtle); padding: 24px; display: flex; flex-direction: column; gap: 24px; }
+        .match-card-mini { background: var(--bg-deep); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 16px; }
+    </style>
+</head>
+<body>
+
+    <input type="radio" id="tab-dashboard" name="spa-nav" checked>
+    <input type="radio" id="tab-boveda" name="spa-nav">
+    <input type="radio" id="tab-inventario" name="spa-nav">
+    <input type="radio" id="tab-matches" name="spa-nav">
+    <input type="radio" id="tab-billetera" name="spa-nav">
+
+    <div class="app-layout">
+        
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">S</div>
+                <span class="brand-text">Swap IT</span>
+            </div>
+            
+            <nav class="nav-menu">
+                <label for="tab-dashboard" class="nav-item">
+                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z"/></svg>
+                    <span>Dashboard</span>
+                </label>
+                <label for="tab-boveda" class="nav-item">
+                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 1.79-9 4s4.03 4 9 4 9-1.79 9-4-4.03-4-9-4zm0 10c-4.97 0-9 1.79-9 4s4.03 4 9 4 9-1.79 9-4-4.03-4-9-4z"/></svg>
+                    <span>La Bóveda</span>
+                </label>
+                <label for="tab-inventario" class="nav-item">
+                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM10 4h4v2h-4V4zm10 16H4V8h16v12z"/></svg>
+                    <span>Mi Inventario</span>
+                </label>
+                <label for="tab-matches" class="nav-item">
+                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3L5 6.99h3V14h2V6.99h3L9 3z"/></svg>
+                    <span>Mis Matches</span>
+                </label>
+                <label for="tab-billetera" class="nav-item">
+                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 7.28V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z"/></svg>
+                    <span>Billetera</span>
+                </label>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <img src="https://ui-avatars.com/api/?name=E+S&background=2563EB&color=fff" alt="User" class="avatar">
+                    <div class="user-details">
+                        <h4>Elias Sánchez</h4>
+                        <p>FCC - BUAP</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div class="search-bar">
+                    <svg width="18" height="18" fill="var(--text-muted)" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                    <input type="text" class="search-input" placeholder="Buscar componentes (ej. SSD M.2 1TB)...">
+                </div>
+                <div class="topbar-actions">
+                    <button class="btn-icon"><svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg><div class="badge-dot"></div></button>
+                </div>
+            </header>
+
+            <div class="page-content view-section view-dashboard">
+                <div class="header-title">
+                    <h1>Resumen General</h1>
+                    <p>Monitoreo de tus intercambios y economía circular.</p>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>Eco-Tokens Acumulados</h3>
+                            <div class="value" style="color: var(--accent);">450 <span style="font-size: 16px;">ET</span></div>
+                        </div>
+                        <div class="stat-icon">⚡</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>Matches Exitosos</h3>
+                            <div class="value">12</div>
+                        </div>
+                        <div class="stat-icon" style="color: var(--success); background: rgba(16,185,129,0.1);">✓</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>Nivel de Confianza</h3>
+                            <div class="value">Alto</div>
+                        </div>
+                        <div class="stat-icon" style="color: var(--warning); background: rgba(245,158,11,0.1);">⭐</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-content view-section view-boveda">
+                <div class="header-title">
+                    <h1>La Bóveda de Intercambio</h1>
+                    <p>Catálogo global de hardware publicado por otros estudiantes.</p>
+                </div>
+                <div class="filters">
+                    <div class="filter-chip active">Todo</div>
+                    <div class="filter-chip">Memorias RAM</div>
+                    <div class="filter-chip">Almacenamiento</div>
+                    <div class="filter-chip">Periféricos</div>
+                    <div class="filter-chip" style="margin-left: auto; border-color: var(--success); color: var(--success);">Solo Verificados</div>
+                </div>
+                <div class="boveda-grid">
+                    <article class="hardware-card">
+                        <div class="hc-img"><span class="tag success" style="position: absolute; top:12px; left:12px;">Verificado Centro Cómputo</span>Foto SSD</div>
+                        <div class="hc-body">
+                            <h3 class="hc-title">SSD Kingston NVMe M.2 500GB</h3>
+                            <p style="font-size: 13px; color: var(--text-muted);">98% de vida útil. Formateado a bajo nivel.</p>
+                            <div class="hc-footer">
+                                <div><span style="font-size: 11px; color: var(--text-muted); display: block;">Valor</span><strong style="color: var(--accent);">200 ET</strong></div>
+                                <button class="btn-outline">Ver Detalle</button>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="hardware-card">
+                        <div class="hc-img">Foto Teclado Mecánico</div>
+                        <div class="hc-body">
+                            <h3 class="hc-title">Teclado Redragon Kumara K552</h3>
+                            <p style="font-size: 13px; color: var(--text-muted);">Switches Outemu Red, algunas teclas gastadas.</p>
+                            <div class="hc-footer">
+                                <div><span style="font-size: 11px; color: var(--text-muted); display: block;">Valor</span><strong style="color: var(--accent);">150 ET</strong></div>
+                                <button class="btn-outline">Ver Detalle</button>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="hardware-card">
+                        <div class="hc-img"><span class="tag success" style="position: absolute; top:12px; left:12px;">Verificado Centro Cómputo</span>Foto RAM Laptop</div>
+                        <div class="hc-body">
+                            <h3 class="hc-title">RAM DDR4 SODIMM 8GB 2666MHz</h3>
+                            <p style="font-size: 13px; color: var(--text-muted);">Extraída de una Lenovo Thinkpad por upgrade.</p>
+                            <div class="hc-footer">
+                                <div><span style="font-size: 11px; color: var(--text-muted); display: block;">Valor</span><strong style="color: var(--accent);">100 ET</strong></div>
+                                <button class="btn-outline">Ver Detalle</button>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+
+            <div class="page-content view-section view-inventario">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div class="header-title">
+                        <h1>Mi Inventario</h1>
+                        <p>Hardware que has aportado a la economía circular.</p>
+                    </div>
+                    <button class="btn-primary">+ Publicar Nuevo Hardware</button>
+                </div>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID Pieza</th>
+                            <th>Descripción</th>
+                            <th>Valor Base (ET)</th>
+                            <th>Estado Actual</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="color: var(--text-muted);">#INV-0992</td>
+                            <td><strong>Tarjeta Madre ASUS Prime A320M-K</strong><br><span style="font-size: 12px; color: var(--text-muted);">Sin caja original. Solo placa.</span></td>
+                            <td>350 ET</td>
+                            <td><span class="tag success">Publicado y Verificado</span></td>
+                            <td><button class="btn-outline" style="padding: 4px 8px; font-size: 11px;">Editar</button></td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--text-muted);">#INV-1045</td>
+                            <td><strong>Monitor LG 19" VGA</strong><br><span style="font-size: 12px; color: var(--text-muted);">Funcional, un píxel muerto.</span></td>
+                            <td>120 ET</td>
+                            <td><span class="tag warning">En revisión Taller</span></td>
+                            <td><button class="btn-outline" style="padding: 4px 8px; font-size: 11px;">Editar</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="page-content view-section view-matches">
+                <div class="header-title">
+                    <h1>Mis Matches</h1>
+                    <p>Historial y estado de tus negociaciones (Algoritmo P2P).</p>
+                </div>
+                <div class="boveda-grid">
+                    <div class="hardware-card" style="border-color: var(--primary); box-shadow: 0 0 20px rgba(37,99,235,0.1);">
+                        <div class="hc-body">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                                <span class="tag primary">Match Activo</span>
+                                <span style="font-size: 12px; color: var(--text-muted);">Hoy, 10:30 AM</span>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                                <p style="font-size: 13px; margin-bottom: 8px;"><strong>Tú entregas:</strong> Tarjeta Madre ASUS A320M</p>
+                                <div style="text-align: center; color: var(--primary); margin: 4px 0;">↓↑</div>
+                                <p style="font-size: 13px;"><strong>Recibes:</strong> SSD NVMe 500GB + 150 ET</p>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn-primary" style="flex: 1; font-size: 12px;">Abrir Chat P2P</button>
+                                <button class="btn-outline" style="border-color: var(--success); color: var(--success); font-size: 12px;">Confirmar Entrega</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-content view-section view-billetera">
+                <div class="header-title">
+                    <h1>Billetera Digital</h1>
+                    <p>Gestión de Eco-Tokens (ET) dentro del ecosistema.</p>
+                </div>
+                
+                <div class="wallet-banner">
+                    <div class="wb-balance">
+                        <h2>Saldo Disponible</h2>
+                        <div class="amount">450 <span>ET</span></div>
+                    </div>
+                    <div>
+                        <button class="btn-primary" style="background: #fff; color: #172554;">Ver reglas de Tokens</button>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 16px; margin-bottom: 16px;">Historial de Transacciones</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Concepto</th>
+                            <th>Contraparte</th>
+                            <th>Monto (ET)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>24 Jun 2026</td>
+                            <td>Ingreso por Match #882 (RAM 8GB)</td>
+                            <td>@israel_ml</td>
+                            <td style="color: var(--success); font-weight: bold;">+ 100 ET</td>
+                        </tr>
+                        <tr>
+                            <td>15 Jun 2026</td>
+                            <td>Adquisición en Bóveda (Fuente 500W)</td>
+                            <td>@fernando_gs</td>
+                            <td style="color: var(--danger); font-weight: bold;">- 250 ET</td>
+                        </tr>
+                        <tr>
+                            <td>10 Jun 2026</td>
+                            <td>Bono Bienvenida Validado BUAP</td>
+                            <td>Sistema Swap IT</td>
+                            <td style="color: var(--success); font-weight: bold;">+ 600 ET</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <aside class="right-panel">
+            <div>
+                <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Estado del Sistema</h3>
+                <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 10px; height: 10px; background: var(--success); border-radius: 50%; box-shadow: 0 0 8px var(--success);"></div>
+                    <div>
+                        <strong style="font-size: 13px; color: var(--success); display: block;">Supabase Realtime</strong>
+                        <span style="font-size: 11px; color: var(--text-muted);">WebSockets Conectados</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 16px;">
+                <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Recordatorio Taller</h3>
+                <p style="font-size: 13px; line-height: 1.5; color: var(--text-main);">Las entregas físicas validadas se realizan en el Centro Integral de Servicio de Cómputo (CC04).</p>
+            </div>
+        </aside>
+
+    </div>
+</body>
+</html>

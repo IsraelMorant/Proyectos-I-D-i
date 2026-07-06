@@ -1,0 +1,140 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-brand-bg text-brand-text font-sans antialiased;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5 {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    @apply font-semibold;
+  }
+
+  input, textarea, select {
+    @apply outline-none;
+  }
+}
+
+@layer components {
+  /* ── Auth pages ── */
+  .auth-input {
+    @apply w-full px-4 py-3 rounded-xl border border-brand-border bg-white
+           text-brand-text placeholder-brand-muted text-sm
+           focus:ring-2 focus:ring-brand-accent/30 focus:border-brand-accent
+           transition-all duration-200;
+  }
+
+  .auth-label {
+    @apply block text-xs font-semibold text-brand-primary uppercase tracking-wide mb-1.5;
+  }
+
+  .btn-primary {
+    @apply w-full py-3 px-6 rounded-xl bg-brand-gradient text-white font-semibold
+           text-sm tracking-wide shadow-md hover:shadow-lg hover:brightness-110
+           active:scale-[0.98] transition-all duration-200 cursor-pointer;
+  }
+
+  .btn-secondary {
+    @apply w-full py-3 px-6 rounded-xl border-2 border-brand-primary text-brand-primary
+           font-semibold text-sm tracking-wide hover:bg-brand-primary hover:text-white
+           active:scale-[0.98] transition-all duration-200 cursor-pointer;
+  }
+
+  /* ── Cards ── */
+  .card {
+    @apply bg-white rounded-2xl shadow-card border border-brand-border/50
+           transition-all duration-200;
+  }
+
+  .card-hover {
+    @apply card hover:shadow-cardHover hover:-translate-y-0.5;
+  }
+
+  /* ── Badges ── */
+  .badge-token {
+    @apply inline-flex items-center gap-1.5 bg-token-gradient text-white
+           text-xs font-semibold px-3 py-1.5 rounded-full;
+  }
+
+  .badge-status-available {
+    @apply inline-flex items-center gap-1 bg-emerald-50 text-emerald-700
+           text-xs font-medium px-2.5 py-1 rounded-full border border-emerald-200;
+  }
+
+  .badge-status-process {
+    @apply inline-flex items-center gap-1 bg-amber-50 text-amber-700
+           text-xs font-medium px-2.5 py-1 rounded-full border border-amber-200;
+  }
+
+  .badge-status-inactive {
+    @apply inline-flex items-center gap-1 bg-slate-50 text-slate-500
+           text-xs font-medium px-2.5 py-1 rounded-full border border-slate-200;
+  }
+
+  /* ── Form inputs ── */
+  .field-input {
+    @apply w-full px-4 py-3 rounded-xl border border-brand-border bg-white
+           text-brand-text placeholder-brand-muted text-sm
+           focus:ring-2 focus:ring-brand-accent/25 focus:border-brand-secondary
+           transition-all duration-200;
+  }
+
+  .field-label {
+    @apply block text-sm font-medium text-brand-primary mb-1.5;
+  }
+
+  /* ── Circuit background pattern for auth ── */
+  .circuit-bg {
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(255,255,255,0.08) 1px, transparent 0);
+    background-size: 32px 32px;
+  }
+
+  /* ── Page wrapper ── */
+  .page-wrapper {
+    @apply min-h-screen bg-brand-bg;
+  }
+
+  /* ── Section title ── */
+  .section-title {
+    @apply text-2xl font-bold text-brand-primary tracking-tight;
+  }
+
+  /* ── Breadcrumb ── */
+  .breadcrumb {
+    @apply flex items-center gap-2 text-xs text-brand-muted mb-4;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #EEF3F8;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #C8D9E8;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #1565C0;
+  }
+}
+
+@layer utilities {
+  .bg-token-gradient {
+    background: linear-gradient(135deg, #0B2D4E 0%, #1A4A7A 100%);
+  }
+}
