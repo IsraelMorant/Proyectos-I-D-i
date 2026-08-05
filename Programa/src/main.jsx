@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { AppProvider } from './context/AppContext'
 import App from './App.jsx'
 
-// Asegúrate de que este archivo contenga @tailwind base, components, utilities
+
 import './index.css' 
 
 createRoot(document.getElementById('root')).render(
